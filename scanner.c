@@ -29,18 +29,82 @@ void skipBlank() {
 
 void skipComment() {
   // TODO
+  int state = 3;
+  while(state != 5){
+    readChar();
+    if(currentChar == EOF){
+      error(ERR_ENDOFCOMMENT, lineNo, colNo);
+      state = 5;
+    }
+    if(state == 3){
+      switch(charCodes[currentChar]){
+        case CHAR_TIMES:
+          state = 4;
+          break;
+        default:
+          state = 3;
+          break;
+      }
+    }
+    else if(state == 4){
+      switch(charCodes[currentChar]){
+        case CHAR_RPAR:
+          readChar();
+          state = 5;
+          break;
+        case CHAR_TIMES:
+          state = 4;
+          break;
+        default:
+          state = 3;
+          break;
+      }
+    }
+  }
 }
 
 Token* readIdentKeyword(void) {
   // TODO
+   Token * token = makeToken(TK_IDENT, lineNo, colNo);
+  int i = 0;
+  while(charCodes[currentChar] == CHAR_LETTER || charCodes[currentChar] == CHAR_DIGIT){
+
+    token->string[i++] = (char)currentChar;
+    readChar();
+  }
+  TokenType tokenType = checkKeyword(token->string);
+  if(tokenType != TK_NONE)
+    token->tokenType = tokenType;
+  return token;
 }
 
 Token* readNumber(void) {
   // TODO
+   Token * token = makeToken(TK_NUMBER, lineNo, colNo);
+  int i = 0;
+  while(charCodes[currentChar] == CHAR_DIGIT){
+
+    token->string[i++] = (char)currentChar;
+    readChar();
+  }
+  token->value = atoi(token->string);
+  return token;
 }
 
 Token* readConstChar(void) {
   // TODO
+  readChar();
+  Token* token = makeToken(TK_CHAR, lineNo, colNo - 1);
+  int i = 0;
+  while(charCodes[currentChar] != CHAR_SINGLEQUOTE){
+
+    token->string[i++] = (char)currentChar;
+    if(i>1)
+      error(ERR_INVALIDCHARCONSTANT, lineNo, colNo - 2);
+    readChar();
+  }
+  readChar();
+  return token;
 }
 
 Token* getToken(void) {
